@@ -8,23 +8,44 @@
 
 import UIKit
 
-class ViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
+class ViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, URLSessionDelegate {
     
     let cellIdentifier = "CellIdentifier"
     
-    private let dwarves = ["Sleepy", "Sneezy", "Bashful", "Happy", "Doc", "Grumpy",
-                           "Dopey", "Thorin", "Dorin", "Nori", "Ori", "Balin", "Dwalin",
-                           "Fili", "Kili", "Oin", "Gloin", "Bifur", "Bofur", "Bombur"]
+    // Create URLSession that uses a delegate
+    private lazy var session: URLSession = URLSession(configuration: .default, delegate: self, delegateQueue: nil)
+    var receivedData: NSData?
+    let url = URL(string: "http://cdn.jaminya.com/json/cities.json")!
+    
+    
+    // Local data to populate UITableView
+    private let mountains = ["Denali", "Mount Logan", "Pico de Orizaba", "Mount Saint Elias", "Popocatépetl", "Mount Foraker",
+                           "Mount Lucania", "Iztaccíhuatl", "King Peak", "Mount Bona", "Mount Steele", "Cofre de Perote", "Mount Sanford",
+                           "Volcán Tajumulco", "Grand Teton", "Mount Slaggard", "Nevado de Toluca", "Nevado de Colima", "La Malinche", "Castle Peak"]
+    
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
+
+        let task = session.dataTask(with: url) { (data, response, error) in
+            if error != nil {
+                print(error!.localizedDescription)
+            } else {
+                self.receivedData = data as NSData?
+                
+                // Display received data in console debugger
+                if let data = data {
+                    if let jsonData = String(data: data, encoding: String.Encoding.utf8)
+                    {
+                        print(jsonData)
+                    }
+                }
+            }
+        }
+        task.resume()
     }
     
-    override func viewDidAppear(_ animated: Bool) {
-         }
-    }
-
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
@@ -35,7 +56,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     // MARK: Table View Data Source Methods
     
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return dwarves.count
+        return mountains.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
@@ -46,9 +67,8 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
                 reuseIdentifier: cellIdentifier
             )
         }
-        cell?.textLabel?.text = dwarves[indexPath.row]
+        cell?.textLabel?.text = mountains[indexPath.row]
         return cell!
-    }
-
+    }    
 }
 
