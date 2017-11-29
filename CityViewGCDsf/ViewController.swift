@@ -51,7 +51,6 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
                        /* if let jsonData = String(data: data, encoding: String.Encoding.utf8)
                         {
                             print(jsonData)
-                            print(self.jsonObjects!)
                         }*/
                         
                     } catch let error as NSError {
@@ -94,18 +93,16 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             )
         }
         
-       // if self.jsonObjects != nil {
         if let cityObject = self.jsonObjects?[indexPath.row] as? NSDictionary {
 
-            print("cityObject: \(cityObject)")
+            // print("cityObject: \(cityObject)")
             cell?.textLabel?.text = cityObject["city"] as? String
-
+            cell?.imageView?.image = UIImage(named: "Placeholder.png")
         } else {
             cell?.textLabel?.text = "city_name"
-
+            cell?.imageView?.image = UIImage(named: "Placeholder.png")
         }
         
         return cell!
     }    
 }
-
