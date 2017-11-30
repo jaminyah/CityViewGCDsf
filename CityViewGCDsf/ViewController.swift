@@ -93,16 +93,35 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
             )
         }
         
-        if let cityObject = self.jsonObjects?[indexPath.row] as? NSDictionary {
-
-            // print("cityObject: \(cityObject)")
+        if let cityObject = self.jsonObjects?[indexPath.row] as? NSDictionary
+        {
             cell?.textLabel?.text = cityObject["city"] as? String
-            cell?.imageView?.image = UIImage(named: "Placeholder.png")
+            
+            let urlString = cityObject["flagUrl"] as? String
+            let flagUrl = URL(string: urlString!)!
+            let session = URLSession(configuration: .default)
+            
+            let downloadTask = session.dataTask(with: flagUrl) { (data, response, error) in
+                if error != nil {
+                    print(error!.localizedDescription)
+                } else
+                {
+                    if let imageData = data {
+                        
+                        // Display on main thread
+                        DispatchQueue.main.async {
+                            cell?.imageView?.image = UIImage(data: imageData)
+                        }
+                    }
+                }
+            }
+            
+            downloadTask.resume()
+            
         } else {
             cell?.textLabel?.text = "city_name"
             cell?.imageView?.image = UIImage(named: "Placeholder.png")
         }
-        
         return cell!
     }    
 }
