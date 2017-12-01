@@ -12,6 +12,9 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     
     let cellIdentifier = "CellIdentifier"
     
+    // Properties for caching
+    let imageCache = NSCache<NSString, NSData>()
+    
     // Create URLSession that uses a delegate
     private lazy var session: URLSession = URLSession(configuration: .default, delegate: self, delegateQueue: nil)
     let url = URL(string: "http://cdn.jaminya.com/json/cities.json")!
@@ -23,8 +26,9 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
     override func viewDidLoad() {
         super.viewDidLoad()
         
-
-
+        // Cache 20 images
+        self.imageCache.countLimit = 20
+        
         let task = session.dataTask(with: url) { (data, response, error) in
             if error != nil {
                 print(error!.localizedDescription)
@@ -97,26 +101,42 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         {
             cell?.textLabel?.text = cityObject["city"] as? String
             
-            let urlString = cityObject["flagUrl"] as? String
-            let flagUrl = URL(string: urlString!)!
-            let session = URLSession(configuration: .default)
+            // Check if image is cached
+            let flagKey = cityObject["slug"] as? NSString
             
-            let downloadTask = session.dataTask(with: flagUrl) { (data, response, error) in
-                if error != nil {
-                    print(error!.localizedDescription)
-                } else
-                {
-                    if let imageData = data {
+            if let cachedImageData = self.imageCache.object(forKey: flagKey!) {
+                print("Fetching from cache: \(flagKey!)")
+                let imgData = cachedImageData as Data
+                
+                // Set state flag image
+                cell?.imageView?.image = UIImage(data: imgData)
+            } else {
+            
+                let urlString = cityObject["flagUrl"] as? String
+                let flagUrl = URL(string: urlString!)!
+                let session = URLSession(configuration: .default)
+            
+                let downloadTask = session.dataTask(with: flagUrl) { (data, response, error) in
+                    if error != nil {
+                        print(error!.localizedDescription)
+                    } else
+                    {
+                        if let imageData = data {
                         
-                        // Display on main thread
-                        DispatchQueue.main.async {
-                            cell?.imageView?.image = UIImage(data: imageData)
-                        }
+                            // Cached image
+                            print("Fetching from network: \(flagKey!)")
+                            let fetchedImageData = imageData as NSData
+                            self.imageCache.setObject(fetchedImageData, forKey: flagKey!)
+                            
+                            // Display state flag image on main thread
+                            DispatchQueue.main.async {
+                                cell?.imageView?.image = UIImage(data: imageData)
+                            }
                     }
                 }
             }
-            
-            downloadTask.resume()
+                downloadTask.resume()
+            }
             
         } else {
             cell?.textLabel?.text = "city_name"
